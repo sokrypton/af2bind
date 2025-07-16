@@ -18,11 +18,15 @@ For more details see preprint:
 
 Experiments were conducted using the latest [ColabDesign](https://github.com/sokrypton/ColabDesign) github commit `v1.1.1`, with the Alphafold's weights as of [2022-03-02](https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar)
 
-# Software requirements
+# System Requirements
 
+## Hardware requirement
+AF2BIND requires a standalone computer with an Nvidia GPU.
+
+## OS Requirements
 AF2BIND was tested on Red Hat Enterprise Linux; Version 9.6
 
-# Python dependencies
+## Python dependencies
 
 ``` 
 colabdesign
