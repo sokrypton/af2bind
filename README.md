@@ -49,6 +49,46 @@ mkdir params
 curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar | tar x -C params
 ```
 
+# Code example
+
+We run af2bind on the PDB file 6w70 to get the predictions. 
+To run the code, you should define the af2bind function, which is located in af2bind.ipynb.
+
+```
+target_pdb = "6w70" 
+target_chain = "A"
+
+mask_sidechains = True
+mask_sequence = False
+
+target_pdb = target_pdb.replace(" ","")
+target_chain = target_chain.replace(" ","")
+if target_chain == "":
+  target_chain = "A"
+
+pdb_filename = get_pdb(target_pdb)
+
+clear_mem()
+af_model = mk_afdesign_model(protocol="binder", debug=True)
+af_model.prep_inputs(pdb_filename=pdb_filename,
+                     chain=target_chain,
+                     binder_len=20,
+                     rm_target_sc=mask_sidechains,
+                     rm_target_seq=mask_sequence)
+
+r_idx = af_model._inputs["residue_index"][-20] + (1 + np.arange(20)) * 50
+af_model._inputs["residue_index"][-20:] = r_idx.flatten()
+
+af_model.set_seq("ACDEFGHIKLMNPQRSTVWY")
+af_model.predict(verbose=False)
+
+o = af2bind(af_model.aux["debug"]["outputs"],
+            mask_sidechains=mask_sidechains)
+pred_bind = o["p_bind"].copy()
+```
+
+
+
 # License
 
 This project is covered under the MIT License.
