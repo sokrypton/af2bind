@@ -22,6 +22,17 @@ Experiments were conducted using the latest [ColabDesign](https://github.com/sok
 
 AF2BIND was tested on Red Hat Enterprise Linux; Version 9.6
 
+# Python dependencies
+
+``` 
+colabdesign
+numpy
+pandas
+jax
+pickle
+py3Dmol
+``` 
+
 # Installation
 
 first install jax (with GPU support)
