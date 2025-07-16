@@ -18,5 +18,28 @@ For more details see preprint:
 
 Experiments were conducted using the latest [ColabDesign](https://github.com/sokrypton/ColabDesign) github commit `v1.1.1`, with the Alphafold's weights as of [2022-03-02](https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar)
 
+# Software requirements
+
+AF2BIND was tested on Red Hat Enterprise Linux; Version 9.6
+
+# Installation
+
+first install jax (with GPU support)
+
+``` pip install "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html ```
+
+second install colabdesign
+
+```
+pip install git+https://github.com/sokrypton/ColabDesign.git@v1.1.1
+# download alphafold weights
+mkdir params
+curl -fsSL https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar | tar x -C params
+```
+
+# License
+
+This project is covered under the MIT License.
+
 # Other Models
 The *.zip files contain all the other weights for models described in the manuscript (including ESM-2, ESM-IF, combinations, etc.). See train_script.ipynb for details on how features are combined.
