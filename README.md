@@ -32,6 +32,7 @@ jax
 pickle
 py3Dmol
 ``` 
+typical install time ≈ 10 minutes.
 
 # Installation
 
