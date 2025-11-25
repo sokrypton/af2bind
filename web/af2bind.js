@@ -566,10 +566,20 @@ function loadStructure(parsed, objectName) {
         resiNum: frames[0].residue_numbers[i]
     }));
 
+    // Preserve current color mode before adding new object
+    const colorSelect = document.getElementById('colorSelect');
+    const preservedColorMode = colorSelect?.value;
+
     renderer.addObject(objectName);
     for (const frame of frames) renderer.addFrame(frame, objectName);
     renderer.currentObjectName = objectName;
     renderer.render('af2bind: structure loaded');
+
+    // Restore color mode after render
+    if (colorSelect && preservedColorMode) {
+        colorSelect.value = preservedColorMode;
+        renderer.colorMode = preservedColorMode;
+    }
 
     updateObjectSelect();
     updateFrameUI();
@@ -640,50 +650,75 @@ function renderBindingSiteResults(objectName) {
     // Sort by binding score (descending)
     residues.sort((a, b) => b.pbind - a.pbind);
 
-    // Create canvas-based table
-    let canvasElement = document.getElementById('bindingResultsCanvas');
-    if (!canvasElement) {
-        canvasElement = document.createElement('canvas');
-        canvasElement.id = 'bindingResultsCanvas';
-        canvasElement.style.display = 'block';
-        canvasElement.style.border = '1px solid #d1d5db';
-        canvasElement.style.marginBottom = '8px';
-        tableDiv.innerHTML = '';
-        tableDiv.appendChild(canvasElement);
+    // Add download buttons container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '8px';
+    buttonContainer.style.marginTop = '8px';
 
-        // Add download buttons container
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.gap = '8px';
-        buttonContainer.style.marginTop = '8px';
+    // PDB download button
+    const pdbBtn = document.createElement('button');
+    pdbBtn.className = 'btn btn-grey btn-small';
+    pdbBtn.style.flex = '1';
+    pdbBtn.style.textAlign = 'center';
+    pdbBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download PDB';
+    pdbBtn.onclick = () => downloadPDB(objectName);
 
-        // PDB download button
-        const pdbBtn = document.createElement('button');
-        pdbBtn.className = 'btn btn-grey btn-small';
-        pdbBtn.style.flex = '1';
-        pdbBtn.style.textAlign = 'center';
-        pdbBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download PDB';
-        pdbBtn.onclick = () => downloadPDB(objectName);
+    // CSV download button
+    const csvBtn = document.createElement('button');
+    csvBtn.className = 'btn btn-grey btn-small';
+    csvBtn.style.flex = '1';
+    csvBtn.style.textAlign = 'center';
+    csvBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download CSV';
+    csvBtn.onclick = () => downloadCSV(objectName);
 
-        // CSV download button
-        const csvBtn = document.createElement('button');
-        csvBtn.className = 'btn btn-grey btn-small';
-        csvBtn.style.flex = '1';
-        csvBtn.style.textAlign = 'center';
-        csvBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download CSV';
-        csvBtn.onclick = () => downloadCSV(objectName);
-
-        buttonContainer.appendChild(pdbBtn);
-        buttonContainer.appendChild(csvBtn);
-        tableDiv.appendChild(buttonContainer);
-    }
+    buttonContainer.appendChild(pdbBtn);
+    buttonContainer.appendChild(csvBtn);
+    tableDiv.appendChild(buttonContainer);
 
     // Show container first so it's laid out and we can measure its width
     container.style.display = 'block';
 
+    // Clear old canvas to get accurate container width measurement
+    tableDiv.innerHTML = '';
+
     // Get actual container width to match control panel
     const containerWidth = container.offsetWidth;
     const tableWidth = Math.max(200, containerWidth - 24); // Subtract padding (12px on each side)
+
+    // Re-create canvas element
+    canvasElement = document.createElement('canvas');
+    canvasElement.id = 'bindingResultsCanvas';
+    canvasElement.style.display = 'block';
+    canvasElement.style.border = '1px solid #d1d5db';
+    canvasElement.style.marginBottom = '8px';
+    tableDiv.appendChild(canvasElement);
+
+    // Re-add download buttons
+    const newButtonContainer = document.createElement('div');
+    newButtonContainer.style.display = 'flex';
+    newButtonContainer.style.gap = '8px';
+    newButtonContainer.style.marginTop = '8px';
+
+    // PDB download button
+    const newPdbBtn = document.createElement('button');
+    newPdbBtn.className = 'btn btn-grey btn-small';
+    newPdbBtn.style.flex = '1';
+    newPdbBtn.style.textAlign = 'center';
+    newPdbBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download PDB';
+    newPdbBtn.onclick = () => downloadPDB(objectName);
+
+    // CSV download button
+    const newCsvBtn = document.createElement('button');
+    newCsvBtn.className = 'btn btn-grey btn-small';
+    newCsvBtn.style.flex = '1';
+    newCsvBtn.style.textAlign = 'center';
+    newCsvBtn.innerHTML = '<i class="fa-solid fa-download" style="margin-right: 6px;"></i>Download CSV';
+    newCsvBtn.onclick = () => downloadCSV(objectName);
+
+    newButtonContainer.appendChild(newPdbBtn);
+    newButtonContainer.appendChild(newCsvBtn);
+    tableDiv.appendChild(newButtonContainer);
 
     // Render canvas table with dynamic width matching the control panel
     renderBindingSiteTable(canvasElement, residues, tableWidth, 400);
