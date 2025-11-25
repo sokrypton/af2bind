@@ -826,8 +826,11 @@ function renderBindingSiteTable(canvas, residues, maxWidth, maxHeight) {
         ctx.fillStyle = `rgb(${color.r},${color.g},${color.b})`;
         ctx.fillRect(colPbindStart, y + 4, colPbindWidth, 16);
 
-        // Draw pBind score text
-        ctx.fillStyle = '#ffffff';
+        // Draw pBind score text with inverted colors for readability
+        // Calculate luminance of background color
+        const luminance = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255;
+        // Use white text on dark backgrounds, black text on light backgrounds
+        ctx.fillStyle = luminance > 0.5 ? '#000000' : '#ffffff';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -984,22 +987,13 @@ function threeLetterToOne(threeCode) {
 }
 
 function getBindingColor(score) {
-    // Red (0) → White (0.5) → Blue (1.0)
-    if (score < 0.5) {
-        const t = score * 2;
-        return {
-            r: 255,
-            g: Math.round(255 * t),
-            b: Math.round(255 * t)
-        };
-    } else {
-        const t = (score - 0.5) * 2;
-        return {
-            r: Math.round(255 * (1 - t)),
-            g: Math.round(255 * (1 - t)),
-            b: 255
-        };
-    }
+    // White (0) → Blue (1.0)
+    const t = score; // 0-1 for entire range
+    return {
+        r: Math.round(255 * (1 - t)),
+        g: Math.round(255 * (1 - t)),
+        b: 255
+    };
 }
 
 function updateObjectSelect() {
@@ -1229,24 +1223,13 @@ function bindingSiteColorFunc(atomIndex, renderer) {
         return { r: 128, g: 128, b: 128 }; // Grey for residues without predictions
     }
 
-    // Color gradient: red (0) → white (0.5) → blue (1.0)
-    if (score < 0.5) {
-        // Red to White: interpolate red→white
-        const t = score * 2; // 0-1 for this range
-        return {
-            r: 255,
-            g: Math.round(255 * t),
-            b: Math.round(255 * t)
-        };
-    } else {
-        // White to Blue: interpolate white→blue
-        const t = (score - 0.5) * 2; // 0-1 for this range
-        return {
-            r: Math.round(255 * (1 - t)),
-            g: Math.round(255 * (1 - t)),
-            b: 255
-        };
-    }
+    // Color gradient: white (0) → blue (1.0)
+    const t = score; // 0-1 for entire range
+    return {
+        r: Math.round(255 * (1 - t)),
+        g: Math.round(255 * (1 - t)),
+        b: 255
+    };
 }
 
 function handleColorChange() {
