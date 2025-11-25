@@ -76,25 +76,20 @@
     display: block;
     margin: 0 auto;
     width: 974px;
-    /* 600 (canvas) + 26 (padding/border) + 8 (gap) + 340 (panel) */
     line-height: 1.5;
 }
 
 /* [END EDIT] */
 
 .py2dmol-viewer-instance #mainContainer {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 8px;
-    background: transparent;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .py2dmol-viewer-instance #viewerColumn {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-width: 600px;
 }
 
 .py2dmol-viewer-instance #canvasContainer {
@@ -169,21 +164,19 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex-shrink: 0;
-    align-self: flex-start;
 }
 
 .py2dmol-viewer-instance #rightPanelContainer {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 340px;
+    min-width: 280px;
 }
 
 .py2dmol-viewer-instance #binding-results-container {
     display: flex;
     flex-direction: column;
-    width: 340px;
+    min-width: 280px;
 }
 
 .py2dmol-viewer-instance #rightPanelContainer.container-box {
@@ -872,13 +865,11 @@
 /* Override sequence-section-container styles for sequence viewer */
 #sequence-viewer-container {
     min-height: auto;
-    /* Override the 520px min-height from .sequence-section-container */
     height: auto;
-    /* Let content determine height */
     overflow: visible;
-    /* Override overflow: hidden from .sequence-section-container */
+    overflow-x: visible;
+    overflow-y: visible;
     resize: none;
-    /* Disable resizing for sequence viewer */
 }
 
 /* [EDIT] Removed old #sequenceViewContainer styles */
@@ -886,12 +877,8 @@
 /* [EDIT] Updated #sequenceView styles for canvas-based rendering */
 #sequenceView {
     display: block;
-    max-height: 400px;
-    /* Fixed height with scrollbar */
-    overflow-y: auto;
-    /* Always show scrollbar when content exceeds height */
-    overflow-x: hidden;
-    /* Prevent horizontal scrollbar */
+    box-sizing: border-box;
+    overflow: visible;
     position: relative;
 }
 

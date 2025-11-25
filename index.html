@@ -54,33 +54,36 @@ AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
 
         <!-- Viewer container -->
         <div id="viewer-container" class="py2dmol-viewer-instance" viewer_id="af2bind-viewer" style="display: none;">
-            <div id="mainContainer">
+            <table id="mainContainer" style="border-collapse: collapse; width: 100%; table-layout: auto;">
+                <tr style="vertical-align: top;">
+                    <td style="padding: 0; vertical-align: top;">
+                        <div id="viewerColumn">
+                            <div id="canvasContainer" class="container-box">
+                                <canvas id="canvas"></canvas>
+                                <div class="resize-handle"></div>
+                            </div>
+                            <div id="controlsContainer" class="container-box">
+                                <button id="playButton" class="btn btn-secondary btn-min-width-sm"><i
+                                        class="fa-solid fa-play"></i></button>
+                                <input type="range" id="frameSlider" min="0" max="0" value="0">
+                                <span id="frameCounter">0 / 0</span>
+                                <select id="speedSelect">
+                                    <option value="100">1x</option>
+                                    <option value="50">2x</option>
+                                    <option value="25">4x</option>
+                                </select>
+                                <button id="overlayButton" class="btn btn-secondary" title="Overlay all frames"
+                                    style="font-weight: 400;">⧉</button>
+                                <!-- Hidden record button (required by viewer-mol.js) -->
+                                <button id="recordButton" style="display: none;"></button>
+                            </div>
+                        </div>
+                    </td>
 
-                <div id="viewerColumn">
-                    <div id="canvasContainer" class="container-box">
-                        <canvas id="canvas"></canvas>
-                        <div class="resize-handle"></div>
-                    </div>
-                    <div id="controlsContainer" class="container-box">
-                        <button id="playButton" class="btn btn-secondary btn-min-width-sm"><i
-                                class="fa-solid fa-play"></i></button>
-                        <input type="range" id="frameSlider" min="0" max="0" value="0">
-                        <span id="frameCounter">0 / 0</span>
-                        <select id="speedSelect">
-                            <option value="100">1x</option>
-                            <option value="50">2x</option>
-                            <option value="25">4x</option>
-                        </select>
-                        <button id="overlayButton" class="btn btn-secondary" title="Overlay all frames"
-                            style="font-weight: 400;">⧉</button>
-                        <!-- Hidden record button (required by viewer-mol.js) -->
-                        <button id="recordButton" style="display: none;"></button>
-                    </div>
-                </div>
-
-                <!-- Right side panel -->
-                <div id="rightPanelsContainer">
-                    <div id="rightPanelContainer" class="container-box">
+                    <!-- Right side panel -->
+                    <td style="padding: 0; padding-left: 8px; vertical-align: top;">
+                        <div id="rightPanelsContainer">
+                            <div id="rightPanelContainer" class="container-box">
 
                         <!-- Navigation toolbar -->
                         <div id="navigationControls" class="toolbar" style="margin-bottom: 4px;">
@@ -160,14 +163,16 @@ AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
                     <div id="binding-results-container" class="container-box" style="display: none;">
                         <div id="bindingResultsTable"></div>
                     </div>
-                </div>
-            </div>
+                    </div>
+                    </td>
+                </tr>
 
+            </table>
         </div>
 
-        <!-- Sequence container -->
+        <!-- Sequence viewer - standalone element outside of table -->
         <div id="sequence-viewer-container" class="container-box sequence-section-container"
-            style="width: 974px; display: none;">
+            style="display: none; margin-top: 10px;">
             <div id="sequenceHeader" class="sequence-header">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <select id="sequenceModeSelect" class="btn btn-grey btn-small"
@@ -185,8 +190,6 @@ AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
             </div>
             <div id="sequenceView" class="sequence-content hidden"></div>
         </div>
-
-    </div>
 
     <!-- Footer -->
     <footer style="margin-top: var(--container-gap); padding: 0; color: #6b7280; font-size: 13px;">

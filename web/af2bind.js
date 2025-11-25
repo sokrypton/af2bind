@@ -323,11 +323,56 @@ function initializeApp() {
         window.SequenceViewer.setCallbacks({
             getRenderer: () => viewerApi?.renderer || null,
             getObjectSelect: () => document.getElementById('objectSelect'),
-            toggleChainResidues: () => {},
-            setChainResiduesSelected: () => {},
-            highlightAtom: () => {},
-            highlightAtoms: () => {},
-            clearHighlight: () => {},
+            toggleChainResidues: (chainId) => {
+                if (!viewerApi?.renderer) return;
+                const renderer = viewerApi.renderer;
+                const current = renderer.getSelection?.() || {};
+                const isChainSelected = current?.chains?.has(chainId) || false;
+
+                const newChains = new Set(current?.chains || []);
+                if (isChainSelected) {
+                    newChains.delete(chainId);
+                } else {
+                    newChains.add(chainId);
+                }
+
+                renderer.setSelection({ chains: newChains });
+            },
+            setChainResiduesSelected: (chainId, selected) => {
+                if (!viewerApi?.renderer) return;
+                const renderer = viewerApi.renderer;
+                const current = renderer.getSelection?.() || {};
+
+                const newChains = new Set(current?.chains || []);
+                if (selected) {
+                    newChains.add(chainId);
+                } else {
+                    newChains.delete(chainId);
+                }
+
+                renderer.setSelection({ chains: newChains });
+            },
+            highlightAtom: (positionIndex) => {
+                if (viewerApi?.renderer) {
+                    viewerApi.renderer.highlightedAtom = positionIndex;
+                    viewerApi.renderer.highlightedAtoms = null;
+                    viewerApi.renderer.render('sequence: highlight atom');
+                }
+            },
+            highlightAtoms: (positionIndices) => {
+                if (viewerApi?.renderer) {
+                    viewerApi.renderer.highlightedAtom = null;
+                    viewerApi.renderer.highlightedAtoms = positionIndices instanceof Set ? positionIndices : new Set(positionIndices);
+                    viewerApi.renderer.render('sequence: highlight atoms');
+                }
+            },
+            clearHighlight: () => {
+                if (viewerApi?.renderer) {
+                    viewerApi.renderer.highlightedAtom = null;
+                    viewerApi.renderer.highlightedAtoms = null;
+                    viewerApi.renderer.render('sequence: clear highlight');
+                }
+            },
             applySelection: () => {}
         });
         if (viewerApi?.renderer?.canvas) window.SequenceViewer.drawHighlights();
@@ -415,6 +460,7 @@ function setupEventListeners() {
     const luckyBtn = document.getElementById('lucky-btn');
     const colorSelect = document.getElementById('colorSelect');
     const objectSelect = document.getElementById('objectSelect');
+    const sequenceModeSelect = document.getElementById('sequenceModeSelect');
     const clearAllBtn = document.getElementById('clearAllButton');
 
     if (fetchBtn && fetchInput) {
@@ -428,6 +474,17 @@ function setupEventListeners() {
 
     if (colorSelect) colorSelect.addEventListener('change', handleColorChange);
     if (objectSelect) objectSelect.addEventListener('change', handleObjectChange);
+    if (sequenceModeSelect) {
+        sequenceModeSelect.addEventListener('change', (e) => {
+            const isSequenceMode = e.target.value === 'sequence';
+            if (window.SequenceViewer?.setSequenceViewMode) {
+                window.SequenceViewer.setSequenceViewMode(isSequenceMode);
+            }
+            if (window.SequenceViewer?.buildSequenceView) {
+                window.SequenceViewer.buildSequenceView();
+            }
+        });
+    }
     if (clearAllBtn) clearAllBtn.addEventListener('click', handleClearAll);
 }
 
@@ -487,6 +544,10 @@ function loadStructure(parsed, objectName) {
     const container = document.getElementById('viewer-container');
     if (container) container.style.display = 'block';
 
+    // Show sequence viewer container
+    const sequenceContainer = document.getElementById('sequence-viewer-container');
+    if (sequenceContainer) sequenceContainer.style.display = 'block';
+
     const frames = [];
     for (const atoms of parsed.models) {
         const frame = convertParsedToFrameData(atoms, parsed.modresMap);
@@ -513,6 +574,9 @@ function loadStructure(parsed, objectName) {
     updateObjectSelect();
     updateFrameUI();
 
+    // Show sequence view and build it
+    const sequenceView = document.getElementById('sequenceView');
+    if (sequenceView) sequenceView.classList.remove('hidden');
     if (window.SequenceViewer?.buildSequenceView) window.SequenceViewer.buildSequenceView();
 
     // Render binding results table if predictions are available
@@ -1167,6 +1231,11 @@ function handleColorChange() {
     renderer.colorsNeedUpdate = true;
     renderer.plddtColorsNeedUpdate = true;
     renderer.render('af2bind: color changed');
+
+    // Update sequence viewer colors to match
+    if (window.SequenceViewer?.updateSequenceViewColors) {
+        window.SequenceViewer.updateSequenceViewColors();
+    }
 }
 
 function applyBindingSiteColoring() {
@@ -1208,6 +1277,12 @@ function handleObjectChange() {
         viewerApi.renderer.currentObjectName = objName;
         viewerApi.renderer.render('af2bind: object changed');
         updateFrameUI();
+        // Update sequence viewer for the new object
+        if (window.SequenceViewer?.buildSequenceView) {
+            window.SequenceViewer.buildSequenceView();
+        }
+        // Update binding results table for the new object
+        renderBindingSiteResults(objName);
     }
 }
 
@@ -1219,6 +1294,9 @@ function handleClearAll() {
         renderer.currentObjectName = null;
         renderer.render('af2bind: clear all');
         document.getElementById('viewer-container').style.display = 'none';
+        document.getElementById('sequence-viewer-container').style.display = 'none';
+        const sequenceView = document.getElementById('sequenceView');
+        if (sequenceView) sequenceView.classList.add('hidden');
         updateObjectSelect();
         setStatus("Cleared all structures");
     }
