@@ -1,0 +1,215 @@
+<!--
+af2bind.html
+-----------
+AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
+- Simplified webapp for human protein structures from AlphaFold
+- Features: pLDDT coloring, predicted binding sites
+- No PAE, no MSA, no biounit/ligands
+- Input: UniProt IDs only
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AF2BIND - AlphaFold Binding Sites</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Core dependencies (load first) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+    <!-- Gzip decompression (for human_proteome_index.json.gz) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <!-- MD5 hashing (for sequence lookup) - stable version -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="web/style.css">
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans p-8">
+
+    <!-- Global Drop Overlay Element -->
+    <div id="global-drop-overlay">
+        <p><i class="fa-solid fa-cloud-arrow-up mr-3"></i> Drop File Anywhere to Load</p>
+    </div>
+
+    <!-- Main container -->
+    <div class="mx-auto" style="width: 974px; position: relative;">
+        <img src="web/logo.png" alt="AF2BIND" style="height: 120px; margin-bottom: 12px; display: block;">
+        <p class="text-gray-500 mb-4">Visualize human protein structures and predicted binding sites from AlphaFold.
+            Enter a UniProt ID to get started.</p>
+
+        <!-- Input section -->
+        <div id="upload-options-container" class="container-box" style="width: 974px; margin-bottom: 10px;">
+            <!-- UniProt ID Input -->
+            <div id="fetch-input-container" style="display: flex; gap: 8px; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; background: white;">
+                <input type="text" id="fetch-uniprot-id" placeholder="e.g., A0A075B700" style="flex: 1; border: none; outline: none; font-size: 14px;">
+                <button id="fetch-btn" class="btn btn-primary">Fetch</button>
+                <button id="lucky-btn" class="btn btn-secondary" title="Load a random protein">I'm Feeling Lucky</button>
+            </div>
+
+            <!-- Status message -->
+            <div id="status-message"></div>
+        </div>
+
+        <!-- Viewer container -->
+        <div id="viewer-container" class="py2dmol-viewer-instance" viewer_id="af2bind-viewer" style="display: none;">
+            <div id="mainContainer">
+
+                <div id="viewerColumn">
+                    <div id="canvasContainer" class="container-box">
+                        <canvas id="canvas"></canvas>
+                        <div class="resize-handle"></div>
+                    </div>
+                    <div id="controlsContainer" class="container-box">
+                        <button id="playButton" class="btn btn-secondary btn-min-width-sm"><i
+                                class="fa-solid fa-play"></i></button>
+                        <input type="range" id="frameSlider" min="0" max="0" value="0">
+                        <span id="frameCounter">0 / 0</span>
+                        <select id="speedSelect">
+                            <option value="100">1x</option>
+                            <option value="50">2x</option>
+                            <option value="25">4x</option>
+                        </select>
+                        <button id="overlayButton" class="btn btn-secondary" title="Overlay all frames"
+                            style="font-weight: 400;">⧉</button>
+                        <!-- Hidden record button (required by viewer-mol.js) -->
+                        <button id="recordButton" style="display: none;"></button>
+                    </div>
+                </div>
+
+                <!-- Right side panel -->
+                <div id="rightPanelsContainer">
+                    <div id="rightPanelContainer" class="container-box">
+
+                        <!-- Navigation toolbar -->
+                        <div id="navigationControls" class="toolbar" style="margin-bottom: 4px;">
+                            <div class="toolbar-row">
+                                <label class="btn-toggle btn-flex" id="rotateToggle" title="Toggle auto-rotation">
+                                    <input type="checkbox" id="rotationCheckbox">
+                                    <span><i class="fa-solid fa-rotate"></i>Rotate</span>
+                                </label>
+
+                                <button id="saveSvgButton" class="btn-toggle btn-flex"
+                                    title="Save as SVG">
+                                    <span><i class="fa-solid fa-camera"></i>SVG</span>
+                                </button>
+
+                                <label class="btn-toggle btn-flex" id="shadowToggle" title="Toggle shadow">
+                                    <input type="checkbox" id="shadowEnabledCheckbox">
+                                    <span><i class="fa-solid fa-sun"></i>Shadow</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Hidden elements required by viewer-mol.js but not displayed -->
+                        <input type="checkbox" id="depthCheckbox" style="display: none;">
+                        <input type="checkbox" id="colorblindCheckbox" style="display: none;">
+                        <button id="outlineModeButton" style="display: none;"></button>
+
+                        <!-- Style and appearance controls -->
+                        <div id="styleAppearanceContainer" class="control-group">
+
+                            <div class="toggle-item" style="display: flex; align-items: center; gap: 8px;">
+                                <label for="colorSelect" class="font-medium text-gray-700"
+                                    style="font-size: 12px;">Color:</label>
+                                <select id="colorSelect"
+                                    style="flex: 1; height: 28px; font-size: 12px; padding: 0 8px;">
+                                    <option value="plddt">pLDDT</option>
+                                    <option value="pbind" selected>pBind</option>
+                                </select>
+                            </div>
+
+                            <div class="toggle-item" style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0;">
+                                    <label for="lineWidthSlider" class="font-medium text-gray-700"
+                                        style="min-width: 35px; font-size: 12px; flex-shrink: 0;">Width:</label>
+                                    <input type="range" id="lineWidthSlider" min="2.0" max="4.7" value="3.0"
+                                        step="0.1" style="flex: 1; min-width: 0;">
+                                </div>
+                                <div style="flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0;">
+                                    <label for="outlineWidthSlider" class="font-medium text-gray-700"
+                                        style="min-width: 35px; font-size: 12px; flex-shrink: 0;">Outline:</label>
+                                    <input type="range" id="outlineWidthSlider" min="0" max="10" value="3.0"
+                                        step="0.1" style="flex: 1; min-width: 0;">
+                                </div>
+                            </div>
+
+                            <div class="toggle-item" style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0;">
+                                    <label for="orthoSlider" class="font-medium text-gray-700"
+                                        style="min-width: 35px; font-size: 12px; flex-shrink: 0;">Ortho:</label>
+                                    <input type="range" id="orthoSlider" min="0" max="1" value="1.0" step="0.01"
+                                        style="flex: 1; min-width: 0;">
+                                </div>
+                            </div>
+
+                            <div class="toggle-item" style="display: flex; align-items: center; gap: 8px;">
+                                <label for="objectSelect" class="font-medium text-gray-700"
+                                    style="font-size: 12px;">Protein:</label>
+                                <select id="objectSelect"
+                                    style="flex: 1; height: 28px; font-size: 12px; padding: 0 8px;">
+                                </select>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Binding Site Results Table -->
+                    <div id="binding-results-container" class="container-box" style="display: none;">
+                        <div id="bindingResultsTable"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sequence container -->
+        <div id="sequence-viewer-container" class="container-box sequence-section-container"
+            style="width: 974px; display: none;">
+            <div id="sequenceHeader" class="sequence-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <select id="sequenceModeSelect" class="btn btn-grey btn-small"
+                        style="min-width: 100px; height: 28px; font-size: 12px; padding: 0 8px;">
+                        <option value="sequence" selected>Sequence</option>
+                        <option value="chain">Chain</option>
+                    </select>
+                </div>
+
+                <div class="sequence-actions" style="margin-left: auto;">
+                    <button id="selectAllResidues" class="btn btn-grey btn-small">Show all</button>
+                    <button id="clearAllResidues" class="btn btn-grey btn-small">Hide all</button>
+                    <button id="copySelectionButton" class="btn btn-grey btn-small" disabled>Copy selection</button>
+                </div>
+            </div>
+            <div id="sequenceView" class="sequence-content hidden"></div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer style="margin-top: var(--container-gap); padding: 0; color: #6b7280; font-size: 13px;">
+        <div
+            style="width: 974px; margin: 0 auto; padding: 10px 0 0 0; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 12px;">
+                <a href="https://github.com/sokrypton/af2bind" target="_blank" rel="noopener noreferrer"
+                    style="color: #3b82f6; text-decoration: none;">
+                    <i class="fab fa-github" style="margin-right: 6px;"></i>View on GitHub
+                </a>
+            </div>
+            <div style="flex: 0 0 auto; font-size: 12px;">
+                <i class="fa-solid fa-shield-halved" style="margin-right: 6px; color: #10b981;"></i>
+                <strong>Privacy:</strong> All processing is performed locally in your browser. No data is uploaded to a
+                server.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="web/py2Dmol.js"></script>
+    <script src="web/af2bind.js"></script>
+
+</body>
+
+</html>
