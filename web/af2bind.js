@@ -11,6 +11,91 @@
 // UTILITY FUNCTIONS (from utils.js) - CORE
 // ============================================================================
 
+// Compact MD5 implementation (replaces crypto-js dependency)
+function md5(string) {
+    function rotateLeft(value, shift) {
+        return (value << shift) | (value >>> (32 - shift));
+    }
+    function addUnsigned(x, y) {
+        const lsw = (x & 0xFFFF) + (y & 0xFFFF);
+        const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+        return (msw << 16) | (lsw & 0xFFFF);
+    }
+    function cmn(q, a, b, x, s, t) {
+        return addUnsigned(rotateLeft(addUnsigned(addUnsigned(a, q), addUnsigned(x, t)), s), b);
+    }
+    function ff(a, b, c, d, x, s, t) {
+        return cmn((b & c) | ((~b) & d), a, b, x, s, t);
+    }
+    function gg(a, b, c, d, x, s, t) {
+        return cmn((b & d) | (c & (~d)), a, b, x, s, t);
+    }
+    function hh(a, b, c, d, x, s, t) {
+        return cmn(b ^ c ^ d, a, b, x, s, t);
+    }
+    function ii(a, b, c, d, x, s, t) {
+        return cmn(c ^ (b | (~d)), a, b, x, s, t);
+    }
+
+    const utf8Encode = s => unescape(encodeURIComponent(s));
+    const s = utf8Encode(string);
+    const l = s.length * 8;
+    const x = Array(((l + 64) >>> 9 << 4) + 15).fill(0);
+
+    for (let i = 0; i < l; i += 8) {
+        x[i >> 5] |= (s.charCodeAt(i / 8) & 0xFF) << (i % 32);
+    }
+    x[l >> 5] |= 0x80 << (l % 32);
+    x[(((l + 64) >>> 9) << 4) + 14] = l;
+
+    let [a, b, c, d] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476];
+
+    for (let i = 0; i < x.length; i += 16) {
+        const [olda, oldb, oldc, oldd] = [a, b, c, d];
+        a = ff(a, b, c, d, x[i], 7, 0xD76AA478); d = ff(d, a, b, c, x[i + 1], 12, 0xE8C7B756);
+        c = ff(c, d, a, b, x[i + 2], 17, 0x242070DB); b = ff(b, c, d, a, x[i + 3], 22, 0xC1BDCEEE);
+        a = ff(a, b, c, d, x[i + 4], 7, 0xF57C0FAF); d = ff(d, a, b, c, x[i + 5], 12, 0x4787C62A);
+        c = ff(c, d, a, b, x[i + 6], 17, 0xA8304613); b = ff(b, c, d, a, x[i + 7], 22, 0xFD469501);
+        a = ff(a, b, c, d, x[i + 8], 7, 0x698098D8); d = ff(d, a, b, c, x[i + 9], 12, 0x8B44F7AF);
+        c = ff(c, d, a, b, x[i + 10], 17, 0xFFFF5BB1); b = ff(b, c, d, a, x[i + 11], 22, 0x895CD7BE);
+        a = ff(a, b, c, d, x[i + 12], 7, 0x6B901122); d = ff(d, a, b, c, x[i + 13], 12, 0xFD987193);
+        c = ff(c, d, a, b, x[i + 14], 17, 0xA679438E); b = ff(b, c, d, a, x[i + 15], 22, 0x49B40821);
+        a = gg(a, b, c, d, x[i + 1], 5, 0xF61E2562); d = gg(d, a, b, c, x[i + 6], 9, 0xC040B340);
+        c = gg(c, d, a, b, x[i + 11], 14, 0x265E5A51); b = gg(b, c, d, a, x[i], 20, 0xE9B6C7AA);
+        a = gg(a, b, c, d, x[i + 5], 5, 0xD62F105D); d = gg(d, a, b, c, x[i + 10], 9, 0x02441453);
+        c = gg(c, d, a, b, x[i + 15], 14, 0xD8A1E681); b = gg(b, c, d, a, x[i + 4], 20, 0xE7D3FBC8);
+        a = gg(a, b, c, d, x[i + 9], 5, 0x21E1CDE6); d = gg(d, a, b, c, x[i + 14], 9, 0xC33707D6);
+        c = gg(c, d, a, b, x[i + 3], 14, 0xF4D50D87); b = gg(b, c, d, a, x[i + 8], 20, 0x455A14ED);
+        a = gg(a, b, c, d, x[i + 13], 5, 0xA9E3E905); d = gg(d, a, b, c, x[i + 2], 9, 0xFCEFA3F8);
+        c = gg(c, d, a, b, x[i + 7], 14, 0x676F02D9); b = gg(b, c, d, a, x[i + 12], 20, 0x8D2A4C8A);
+        a = hh(a, b, c, d, x[i + 5], 4, 0xFFFA3942); d = hh(d, a, b, c, x[i + 8], 11, 0x8771F681);
+        c = hh(c, d, a, b, x[i + 11], 16, 0x6D9D6122); b = hh(b, c, d, a, x[i + 14], 23, 0xFDE5380C);
+        a = hh(a, b, c, d, x[i + 1], 4, 0xA4BEEA44); d = hh(d, a, b, c, x[i + 4], 11, 0x4BDECFA9);
+        c = hh(c, d, a, b, x[i + 7], 16, 0xF6BB4B60); b = hh(b, c, d, a, x[i + 10], 23, 0xBEBFBC70);
+        a = hh(a, b, c, d, x[i + 13], 4, 0x289B7EC6); d = hh(d, a, b, c, x[i], 11, 0xEAA127FA);
+        c = hh(c, d, a, b, x[i + 3], 16, 0xD4EF3085); b = hh(b, c, d, a, x[i + 6], 23, 0x04881D05);
+        a = hh(a, b, c, d, x[i + 9], 4, 0xD9D4D039); d = hh(d, a, b, c, x[i + 12], 11, 0xE6DB99E5);
+        c = hh(c, d, a, b, x[i + 15], 16, 0x1FA27CF8); b = hh(b, c, d, a, x[i + 2], 23, 0xC4AC5665);
+        a = ii(a, b, c, d, x[i], 6, 0xF4292244); d = ii(d, a, b, c, x[i + 7], 10, 0x432AFF97);
+        c = ii(c, d, a, b, x[i + 14], 15, 0xAB9423A7); b = ii(b, c, d, a, x[i + 5], 21, 0xFC93A039);
+        a = ii(a, b, c, d, x[i + 12], 6, 0x655B59C3); d = ii(d, a, b, c, x[i + 3], 10, 0x8F0CCC92);
+        c = ii(c, d, a, b, x[i + 10], 15, 0xFFEFF47D); b = ii(b, c, d, a, x[i + 1], 21, 0x85845DD1);
+        a = ii(a, b, c, d, x[i + 8], 6, 0x6FA87E4F); d = ii(d, a, b, c, x[i + 15], 10, 0xFE2CE6E0);
+        c = ii(c, d, a, b, x[i + 6], 15, 0xA3014314); b = ii(b, c, d, a, x[i + 13], 21, 0x4E0811A1);
+        a = ii(a, b, c, d, x[i + 4], 6, 0xF7537E82); d = ii(d, a, b, c, x[i + 11], 10, 0xBD3AF235);
+        c = ii(c, d, a, b, x[i + 2], 15, 0x2AD7D2BB); b = ii(b, c, d, a, x[i + 9], 21, 0xEB86D391);
+        a = addUnsigned(a, olda); b = addUnsigned(b, oldb);
+        c = addUnsigned(c, oldc); d = addUnsigned(d, oldd);
+    }
+
+    const toHex = n => {
+        let s = '';
+        for (let i = 0; i < 4; i++) s += ((n >> (i * 8)) & 0xFF).toString(16).padStart(2, '0');
+        return s;
+    };
+    return toHex(a) + toHex(b) + toHex(c) + toHex(d);
+}
+
 function calculateMean(coords) {
     let sum = [0, 0, 0];
     for (const c of coords) {
@@ -200,36 +285,35 @@ function convertParsedToFrameData(atoms, modresMap) {
 let viewerApi = null;
 const bindingSiteCache = {};
 const atomIndexMap = {}; // Maps objectName -> [{ chain, resiNum }, ...] for efficient lookup
-let af2bindProteins = null; // Set of proteins with AF2BIND predictions available
 const pdbDataCache = {}; // Store original PDB data for download functionality
 
 class ProteomeLookup {
     constructor() { this.index = null; this.loaded = false; this.reverseIndex = null; }
-    async load() {
-        try {
-            const response = await fetch('web/human_proteome_index.json.gz');
-            if (!response.ok) return;
-            const buffer = await response.arrayBuffer();
-            const decompressed = pako.ungzip(new Uint8Array(buffer));
-            const json = new TextDecoder('utf-8').decode(decompressed);
-            this.index = JSON.parse(json);
-            this.loaded = true;
-
-            // Build reverse index for swissprot and md5 lookups
-            this.reverseIndex = { swissprot: {}, md5: {} };
-            for (const [uniprotId, data] of Object.entries(this.index)) {
-                if (data.swissprot) {
-                    this.reverseIndex.swissprot[data.swissprot.toUpperCase()] = uniprotId;
-                }
-                if (data.md5) {
-                    this.reverseIndex.md5[data.md5.toLowerCase()] = uniprotId;
-                }
-            }
-
-            console.log(`✓ Proteome index loaded: ${Object.keys(this.index).length} proteins`);
-        } catch (error) {
-            console.warn('Proteome index not available:', error.message);
+    load() {
+        if (!window.EMBEDDED_PROTEOME_DATA) {
+            console.error('Embedded proteome data not found');
+            return;
         }
+
+        // Convert compact array format [uniprot, swissprot, md5] to object format
+        this.index = {};
+        for (const [uniprot, swissprot, md5] of window.EMBEDDED_PROTEOME_DATA) {
+            this.index[uniprot] = { swissprot, md5 };
+        }
+
+        // Build reverse index for swissprot and md5 lookups
+        this.reverseIndex = { swissprot: {}, md5: {} };
+        for (const [uniprotId, data] of Object.entries(this.index)) {
+            if (data.swissprot) {
+                this.reverseIndex.swissprot[data.swissprot.toUpperCase()] = uniprotId;
+            }
+            if (data.md5) {
+                this.reverseIndex.md5[data.md5.toLowerCase()] = uniprotId;
+            }
+        }
+
+        this.loaded = true;
+        console.log(`✓ Proteome index loaded: ${Object.keys(this.index).length} proteins`);
     }
     search(query) {
         if (!this.loaded || !this.index) return null;
@@ -256,13 +340,11 @@ class ProteomeLookup {
         }
 
         // Try to compute MD5 of input (if it's a sequence)
-        // Filter: remove whitespace, line breaks, and numbers
         const cleaned = normalized.replace(/[\s\d]/g, '').toUpperCase();
-        // Allow standard amino acids plus ambiguous codes (B, Z, X, U, O, J)
         if (/^[ACDEFGHIKLMNPQRSTUVWXYOBZJ]+$/.test(cleaned)) {
-            const md5 = CryptoJS.MD5(cleaned).toString().toLowerCase();
-            if (this.reverseIndex.md5[md5]) {
-                const uniprotId = this.reverseIndex.md5[md5];
+            const hash = md5(cleaned);
+            if (this.reverseIndex.md5[hash]) {
+                const uniprotId = this.reverseIndex.md5[hash];
                 return { uniprot: uniprotId, ...this.index[uniprotId] };
             }
         }
@@ -381,17 +463,10 @@ function initializeApp() {
     // Setup events
     setupEventListeners();
 
-    // Load proteome and AF2BIND proteins list
-    Promise.all([
-        proteomeLookup.load(),
-        loadAF2BINDProteins()
-    ]).then(() => {
-        const count = proteomeLookup.index ? Object.keys(proteomeLookup.index).length : 0;
-        setStatus(`Ready. ${count} human proteins indexed.`);
-    }).catch(error => {
-        console.warn('Proteome not available:', error);
-        setStatus("Ready. Enter UniProt ID.");
-    });
+    // Load embedded proteome data
+    proteomeLookup.load();
+    const count = proteomeLookup.index ? Object.keys(proteomeLookup.index).length : 0;
+    setStatus(`Ready. ${count} proteins with AF2BIND predictions available.`);
 }
 
 function setStatus(message, isError = false) {
@@ -403,46 +478,15 @@ function setStatus(message, isError = false) {
     console.log((isError ? '✗' : '✓') + ' ' + message);
 }
 
-async function loadAF2BINDProteins() {
-    if (af2bindProteins) return; // Already loaded
-
-    try {
-        const response = await fetch('web/human_proteome_af2bind.txt');
-        if (!response.ok) throw new Error('Failed to load AF2BIND proteome list');
-
-        const text = await response.text();
-        const ids = text.trim().split('\n').map(id => id.trim()).filter(id => id);
-        af2bindProteins = new Set(ids);
-
-        console.log(`✓ Loaded ${af2bindProteins.size} proteins with AF2BIND predictions`);
-    } catch (error) {
-        console.warn('Could not load AF2BIND proteome list:', error);
-        af2bindProteins = new Set(); // Empty set if loading fails
-    }
-}
-
 function loadRandomProtein() {
     if (!proteomeLookup.index || Object.keys(proteomeLookup.index).length === 0) {
         return;
     }
 
-    // Get proteins that have both AF2BIND predictions AND are in the proteome index
-    let candidateProteins;
+    // All proteins in the index have AF2BIND predictions
+    const allProteins = Object.keys(proteomeLookup.index);
+    const randomProtein = allProteins[Math.floor(Math.random() * allProteins.length)];
 
-    if (af2bindProteins && af2bindProteins.size > 0) {
-        // Filter to only proteins with AF2BIND predictions that are also in the index
-        candidateProteins = Array.from(af2bindProteins).filter(id => id in proteomeLookup.index);
-    } else {
-        // Fallback to all indexed proteins if AF2BIND list not available
-        candidateProteins = Object.keys(proteomeLookup.index);
-    }
-
-    if (candidateProteins.length === 0) return;
-
-    // Pick a random protein from the candidates
-    const randomProtein = candidateProteins[Math.floor(Math.random() * candidateProteins.length)];
-
-    // Load it
     const fetchInput = document.getElementById('fetch-uniprot-id');
     if (fetchInput) {
         fetchInput.value = randomProtein;
@@ -1122,7 +1166,7 @@ function downloadCSV(uniprotId) {
 async function loadBindingSitePredictions(uniprotId) {
     try {
         const lastTwoChars = uniprotId.slice(-2).toUpperCase();
-        const url = `https://af2bind.solab.org/preds/${lastTwoChars}/${uniprotId}-F1-model_v4.csv`;
+        const url = `http://af2bind.solab.org/preds/${lastTwoChars}/${uniprotId}-F1-model_v4.csv`;
 
         const response = await fetch(url);
         if (!response.ok) {

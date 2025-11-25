@@ -15,12 +15,8 @@ AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AF2BIND - AlphaFold Binding Sites</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core dependencies (load first) -->
+    <!-- Core dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
-    <!-- Gzip decompression (for human_proteome_index.json.gz) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <!-- MD5 hashing (for sequence lookup) - stable version -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="web/style.css">
@@ -210,6 +206,7 @@ AI Context: AF2BIND WEBAPP - STRUCTURE + BINDING SITE VISUALIZATION
     </footer>
 
     <!-- Scripts -->
+    <script src="web/embedded_data.js"></script>
     <script src="web/mol.js"></script>
     <script src="web/seq.js"></script>
     <script src="web/af2bind.js"></script>
