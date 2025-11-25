@@ -1166,7 +1166,7 @@ function downloadCSV(uniprotId) {
 async function loadBindingSitePredictions(uniprotId) {
     try {
         const lastTwoChars = uniprotId.slice(-2).toUpperCase();
-        const url = `http://af2bind.solab.org/preds/${lastTwoChars}/${uniprotId}-F1-model_v4.csv`;
+        const url = `https://af2bind.solab.org/preds/${lastTwoChars}/${uniprotId}-F1-model_v4.csv`;
 
         const response = await fetch(url);
         if (!response.ok) {
