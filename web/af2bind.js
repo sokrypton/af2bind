@@ -1237,11 +1237,6 @@ function handleColorChange() {
     const colorSelect = document.getElementById('colorSelect');
     let mode = colorSelect?.value;
 
-    // Map plddt to deepmind internally
-    if (mode === 'plddt') {
-        mode = 'deepmind';
-    }
-
     // Let the renderer handle all color modes (including custom "binding" mode)
     const renderer = viewerApi.renderer;
     renderer.colorMode = mode;
@@ -1265,7 +1260,7 @@ function applyBindingSiteColoring() {
     const predictions = bindingSiteCache[objName];
     if (!predictions) {
         console.warn('No binding site predictions for', objName);
-        renderer.colorMode = 'plddt';
+        renderer.colorMode = 'deepmind';
         renderer.colorsNeedUpdate = true;
         renderer.render('af2bind: binding fallback');
         return;
@@ -1281,7 +1276,7 @@ function applyBindingSiteColoring() {
         frame.plddts = scores.slice(0, frame.coords.length).map(score => Math.round(score * 100));
     }
 
-    renderer.colorMode = 'plddt';
+    renderer.colorMode = 'deepmind';
     renderer.colorsNeedUpdate = true;
     renderer.render('af2bind: binding colors');
     console.log(`✓ Applied binding site coloring for ${objName}`);
