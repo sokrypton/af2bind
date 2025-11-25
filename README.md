@@ -16,6 +16,11 @@ For more details see preprint:
 
 <p align="center"><img src="https://raw.githubusercontent.com/artemg97/af2bind_prod/main/logo.png" height="128" /></p>
 
+## Quick Access
+
+- **Interactive Database**: [AF2BIND Web Interface](https://af2bind.solab.org) - Visualize AlphaFold structures and predicted binding sites for human proteins
+- **Alternative Interface**: [Human Proteome Explorer](https://gpubio.xyz/humanproteome) - Browse binding site predictions across the human proteome
+
 Experiments were conducted using the latest [ColabDesign](https://github.com/sokrypton/ColabDesign) github commit `v1.1.1`, with the Alphafold's weights as of [2022-03-02](https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar)
 
 # System Requirements
