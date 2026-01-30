@@ -47,7 +47,7 @@ typical install time ≈ 10 minutes.
 
 first install jax (with GPU support)
 
-``` pip install "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html ```
+``` pip install "jax[cuda]==0.7" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html ```
 
 second install colabdesign
 
