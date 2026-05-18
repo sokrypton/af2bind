@@ -19,6 +19,7 @@ For more details see preprint:
 ## Quick Access
 
 - **Interactive Database**: [AF2BIND Web Interface](https://af2bind.solab.org) - Visualize AlphaFold structures and predicted binding sites for human proteins
+  - NOTE: These calculations were performed on pLDDT-trimmed structures using our domain parsing algorithm (see Supp Figs 14 and 15), with domains defined by ECOD.
 - **Alternative Interface**: [Human Proteome Explorer](https://gpubio.xyz/humanproteome) - Browse binding site predictions across the human proteome
 
 Experiments were conducted using the latest [ColabDesign](https://github.com/sokrypton/ColabDesign) github commit `v1.1.1`, with the Alphafold's weights as of [2022-03-02](https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar)
